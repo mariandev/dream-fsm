@@ -10,9 +10,14 @@ function DreamFSM(states, start) {
 	var connections = {};
 
 	/**
-	 * @type {Object.<string, Object.<DreamFSM.ListenerType, Function[]>>}
+	 * @type {Object.<string, Object.<string, Function[]>>}
 	 */
 	var listeners = {};
+	/**
+	 * @const
+	 * @type {string}
+	 */
+	var ANY_STATE = "__DreamFSMAnyState__";
 
 	/**
 	 * @type {string}
@@ -55,44 +60,39 @@ function DreamFSM(states, start) {
 	};
 
 	/**
-	 * @param {string} state
+	 * @param {string|undefined} fromState
+	 * @param {string|undefined} toState
 	 * @param {Function} listener
-	 * @param {DreamFSM.ListenerType} [type=DreamFSM.ListenerType.OnEnter]
 	 * @return {void}
 	 */
-	this.AddListener = function(state, listener, type) {
-		type = typeof type === "undefined" ? DreamFSM.ListenerType.OnEnter : type;
+	this.AddConnectionListener = function(fromState, toState, listener) {
+		if(typeof fromState === "undefined") fromState = ANY_STATE;
+		if(typeof toState === "undefined") toState = ANY_STATE;
 
-		if(states.indexOf(state) === -1) {
-			throw new Error("DreamFSM: State '" + state + "' is not part of the initial set. Correct states: '" + states.join(", ") + "'");
-		}
+		if(typeof listeners[fromState] === "undefined") listeners[fromState] = {};
+		if(typeof listeners[fromState][toState] === "undefined") listeners[fromState][toState] = [];
 
-		if(typeof listeners[state] === "undefined") {
-			listeners[state] = {};
-		}
-
-		if(typeof listeners[state][type] === "undefined") {
-			listeners[state][type] = [];
-		}
-
-		listeners[state][type].push(listener);
+		listeners[fromState][toState].push(listener);
 	};
 
 	/**
-	 * @param {string} state
+	 * @param {string|undefined} fromState
+	 * @param {string|undefined} toState
 	 * @param {Function} listener
-	 * @param {DreamFSM.ListenerType} type
 	 * @return {void}
 	 */
-	this.RemoveListener = function(state, listener, type) {
-		if(typeof listeners[state] === "undefined") return;
-		if(typeof listeners[state][type] === "undefined") return;
+	this.RemoveConnectionListener = function(fromState, toState, listener) {
+		if(typeof fromState === "undefined") fromState = ANY_STATE;
+		if(typeof toState === "undefined") toState = ANY_STATE;
 
-		var idx = listeners[state][type].indexOf(listener);
+		if(typeof listeners[fromState] === "undefined") return;
+		if(typeof listeners[fromState][toState] === "undefined") return;
+
+		var idx = listeners[fromState][toState].indexOf(listener);
 
 		if(idx === -1) return;
 
-		listeners[state][type].splice(idx, 1);
+		listeners[fromState][toState].splice(idx, 1);
 	};
 
 	/**
@@ -113,9 +113,12 @@ function DreamFSM(states, start) {
 			var outgoingState = outgoingStates[outgoingStateKey];
 
 			if(current[outgoingState]()) {
-				FireListeners(state, DreamFSM.ListenerType.OnExit);
+				FireListeners(state, ANY_STATE);
+				FireListeners(state, outgoingState);
+
 				state = outgoingState;
-				FireListeners(state, DreamFSM.ListenerType.OnEnter);
+
+				FireListeners(ANY_STATE, outgoingState);
 
 				break;
 			}
@@ -123,26 +126,17 @@ function DreamFSM(states, start) {
 	};
 
 	/**
-	 * @param {string} state
-	 * @param {DreamFSM.ListenerType} type
+	 * @param {string} fromState
+	 * @param {string} toState
 	 * @return {void}
 	 */
-	var FireListeners = function(state, type) {
-		if(typeof listeners[state] === "undefined") return;
-		if(typeof listeners[state][type] === "undefined") return;
+	var FireListeners = function(fromState, toState) {
+		if(typeof listeners[fromState] === "undefined") return;
+		if(typeof listeners[fromState][toState] === "undefined") return;
 
-		var toCall = listeners[state][type];
+		var toCall = listeners[fromState][toState];
 		for(var index in toCall) {
 			toCall[index]();
 		}
-	}
+	};
 }
-
-/**
- * @readonly
- * @enum {number}
- */
-DreamFSM.ListenerType = {
-	OnEnter: 0,
-	OnExit: 1
-};
