@@ -4,6 +4,8 @@
  * @constructor
  */
 function DreamFSM(states, start) {
+	var self = this;
+
 	/**
 	 * @type {Object.<string, Object.<string, Function.<boolean>>>}
 	 */
@@ -65,7 +67,7 @@ function DreamFSM(states, start) {
 	 * @param {Function} listener
 	 * @return {void}
 	 */
-	this.AddConnectionListener = function(fromState, toState, listener) {
+	this.AddListener = function(fromState, toState, listener) {
 		if(typeof fromState === "undefined") fromState = ANY_STATE;
 		if(typeof toState === "undefined") toState = ANY_STATE;
 
@@ -81,7 +83,7 @@ function DreamFSM(states, start) {
 	 * @param {Function} listener
 	 * @return {void}
 	 */
-	this.RemoveConnectionListener = function(fromState, toState, listener) {
+	this.RemoveListener = function(fromState, toState, listener) {
 		if(typeof fromState === "undefined") fromState = ANY_STATE;
 		if(typeof toState === "undefined") toState = ANY_STATE;
 
@@ -93,6 +95,42 @@ function DreamFSM(states, start) {
 		if(idx === -1) return;
 
 		listeners[fromState][toState].splice(idx, 1);
+	};
+
+	/**
+	 * @param {string|undefined} state
+	 * @param {Function} listener
+	 * @return {void}
+	 */
+	this.AddOnEnterListener = function(state, listener) {
+		self.AddListener(undefined, state, listener);
+	};
+
+	/**
+	 * @param {string|undefined} state
+	 * @param {Function} listener
+	 * @return {void}
+	 */
+	this.AddOnExitListener = function(state, listener) {
+		self.AddListener(state, undefined, listener);
+	};
+
+	/**
+	 * @param {string|undefined} state
+	 * @param {Function} listener
+	 * @return {void}
+	 */
+	this.RemoveOnEnterListener = function(state, listener) {
+		self.RemoveListener(undefined, state, listener);
+	};
+
+	/**
+	 * @param {string|undefined} state
+	 * @param {Function} listener
+	 * @return {void}
+	 */
+	this.RemoveOnExitListener = function(state, listener) {
+		self.RemoveListener(state, undefined, listener);
 	};
 
 	/**
