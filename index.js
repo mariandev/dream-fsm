@@ -12,7 +12,7 @@ function DreamFSM(states, start) {
 	var connections = {};
 
 	/**
-	 * @type {Object.<string, Object.<string, Function[]>>}
+	 * @type {Object.<string, Object.<string, (function(fromState: string, toState: string): void)[]>>}
 	 */
 	var listeners = {};
 	/**
@@ -80,7 +80,7 @@ function DreamFSM(states, start) {
 	/**
 	 * @param {string|undefined} fromState
 	 * @param {string|undefined} toState
-	 * @param {Function} listener
+	 * @param {function(fromState: string, toState: string): void} listener
 	 * @return {void}
 	 */
 	this.RemoveListener = function(fromState, toState, listener) {
@@ -99,7 +99,7 @@ function DreamFSM(states, start) {
 
 	/**
 	 * @param {string|undefined} state
-	 * @param {Function} listener
+	 * @param {function(fromState: string, toState: string): void} listener
 	 * @return {void}
 	 */
 	this.AddOnEnterListener = function(state, listener) {
@@ -108,7 +108,7 @@ function DreamFSM(states, start) {
 
 	/**
 	 * @param {string|undefined} state
-	 * @param {Function} listener
+	 * @param {function(fromState: string, toState: string): void} listener
 	 * @return {void}
 	 */
 	this.AddOnExitListener = function(state, listener) {
@@ -117,7 +117,7 @@ function DreamFSM(states, start) {
 
 	/**
 	 * @param {string|undefined} state
-	 * @param {Function} listener
+	 * @param {function(fromState: string, toState: string): void} listener
 	 * @return {void}
 	 */
 	this.RemoveOnEnterListener = function(state, listener) {
@@ -126,7 +126,7 @@ function DreamFSM(states, start) {
 
 	/**
 	 * @param {string|undefined} state
-	 * @param {Function} listener
+	 * @param {function(fromState: string, toState: string): void} listener
 	 * @return {void}
 	 */
 	this.RemoveOnExitListener = function(state, listener) {
@@ -158,6 +158,8 @@ function DreamFSM(states, start) {
 
 				FireListeners(ANY_STATE, outgoingState);
 
+				FireListeners(ANY_STATE, ANY_STATE);
+
 				break;
 			}
 		}
@@ -173,8 +175,12 @@ function DreamFSM(states, start) {
 		if(typeof listeners[fromState][toState] === "undefined") return;
 
 		var toCall = listeners[fromState][toState];
+
+		var forOutsideFromState = fromState === ANY_STATE ? undefined : fromState;
+		var forOutsideToState = toState === ANY_STATE ? undefined : toState;
+
 		for(var index in toCall) {
-			toCall[index]();
+			toCall[index](forOutsideFromState, forOutsideToState);
 		}
 	};
 }
