@@ -6,6 +6,8 @@
 function DreamFSM(states, start) {
 	var self = this;
 
+	states = states.slice(0);
+
 	/**
 	 * @type {Object.<string, Object.<string, Function.<boolean>>>}
 	 */
@@ -33,6 +35,14 @@ function DreamFSM(states, start) {
 	 */
 	this.State = function() {
 		return state;
+	};
+
+	/**
+	 * @param {string} state
+	 * @void
+	 */
+	this.AddState = function(state) {
+		states.push(state);
 	};
 
 	/**
