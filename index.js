@@ -1,9 +1,9 @@
 /**
  * @param {string[]} states
- * @param {string} start
+ * @param {string} startState
  * @constructor
  */
-function DreamFSM(states, start) {
+function DreamFSM(states, startState) {
 	var self = this;
 
 	states = states.slice(0);
@@ -26,8 +26,11 @@ function DreamFSM(states, start) {
 	/**
 	 * @type {string}
 	 */
-	var state = start;
+	var state = startState;
 
+	/**
+	 * @type {boolean}
+	 */
 	var haltUpdate = false;
 
 	/**
@@ -85,6 +88,10 @@ function DreamFSM(states, start) {
 		if(typeof listeners[fromState][toState] === "undefined") listeners[fromState][toState] = [];
 
 		listeners[fromState][toState].push(listener);
+
+		if(fromState === undefined && toState === state) {
+			listener(undefined, startState);
+		}
 	};
 
 	/**
