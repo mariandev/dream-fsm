@@ -165,17 +165,18 @@ function DreamFSM(states, startState) {
 
 		var outgoingStates = Object.keys(current);
 		for(var outgoingStateKey in outgoingStates) {
+			var currentState = state;
 			var outgoingState = outgoingStates[outgoingStateKey];
 
 			if(current[outgoingState]()) {
-				FireListeners(state, ANY_STATE);
-				FireListeners(state, outgoingState);
+				FireListeners(currentState, ANY_STATE, currentState, outgoingState);
+				FireListeners(currentState, outgoingState);
 
 				state = outgoingState;
 
-				FireListeners(ANY_STATE, outgoingState);
+				FireListeners(ANY_STATE, outgoingState, currentState, outgoingState);
 
-				FireListeners(ANY_STATE, ANY_STATE);
+				FireListeners(ANY_STATE, ANY_STATE, currentState, outgoingState);
 
 				break;
 			}
@@ -185,16 +186,21 @@ function DreamFSM(states, startState) {
 	/**
 	 * @param {string} fromState
 	 * @param {string} toState
+	 * @param {string} [realToState]
+	 * @param {string} [realFromState]
 	 * @return {void}
 	 */
-	var FireListeners = function(fromState, toState) {
+	var FireListeners = function(fromState, toState, realFromState, realToState) {
 		if(typeof listeners[fromState] === "undefined") return;
 		if(typeof listeners[fromState][toState] === "undefined") return;
 
+		if(typeof realFromState === "undefined") realFromState = fromState;
+		if(typeof realToState === "undefined") realToState = toState;
+
 		var toCall = listeners[fromState][toState];
 
-		var forOutsideFromState = fromState === ANY_STATE ? undefined : fromState;
-		var forOutsideToState = toState === ANY_STATE ? undefined : toState;
+		var forOutsideFromState = fromState === ANY_STATE ? realFromState : fromState;
+		var forOutsideToState = toState === ANY_STATE ? realToState : toState;
 
 		for(var index in toCall) {
 			toCall[index](forOutsideFromState, forOutsideToState);
